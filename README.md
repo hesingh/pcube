@@ -12,3 +12,10 @@ This project was published in the IEEE ICNP 2018 workshop P4EU. The paper is ava
 * [Prof. Purushottam Kulkarni](https://www.cse.iitb.ac.in/~puru), Dept. of Computer Science and Engineering, IIT Bombay.
 
 *Student authors with equal contribution
+
+# Dependencies
+
+## pyparsing
+sudo pip3 install pyparsing
+
+## mininet

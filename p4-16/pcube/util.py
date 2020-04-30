@@ -28,7 +28,9 @@ SYNC_HEADER_FILE = "%s_sync_header.p4"
 
 TABLE_STRING = \
 "table %s_info%d_table {\n\
-    key = {%s : %s\n\} // TODO: is this correct?
+    key = {\n\
+           %s : %s;\n\
+    }\n\
     actions{\n\
         %s_info%d;\n\
     }\n\
