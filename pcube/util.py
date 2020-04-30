@@ -3,18 +3,18 @@
 ########################################################
 
 KEYWORDS = {
-    'for'		:	'@pcube_for',
+    'for'	:       '@pcube_for',
     'endfor'	:	'@pcube_endfor',
     'compare'	:	'@pcube_minmax',
     'endcompare':	'@pcube_endminmax',
-    'case'		:	'@pcube_case',
+    'case'	:	'@pcube_case',
     'endcase'	:	'@pcube_endcase',
-    'sum'		:	'@pcube_sum',
-    'bool'      :   '@pcube_cmp',
-    'sync'      :   '@pcube_sync',
-    'endsync'   :   '@pcube_endsync',
-    'echo'      :   '@pcube_echo',
-    'endecho'   :   '@pcube_endecho',
+    'sum'	:	'@pcube_sum',
+    'bool'      :       '@pcube_cmp',
+    'sync'      :       '@pcube_sync',
+    'endsync'   :       '@pcube_endsync',
+    'echo'      :       '@pcube_echo',
+    'endecho'   :       '@pcube_endecho',
 }
 
 TOPO_DATA = None
@@ -34,12 +34,10 @@ TABLE_STRING = \
     size: 1;\n\
 }\n\n"
 
-MODIFY_FIELD = \
-"    modify_field(sync_info._%d,%s);\n"
-
 ADD_HEADER = \
 "   add_header(sync_info);\n"
 
+## TODO: P4-16 has no modify_field
 SYNC_ACTION_START_STRING = \
 "action %s_info%d() {\n\
     clone_ingress_pkt_to_egress(standard_metadata.egress_spec,meta_list);\n\
@@ -49,6 +47,7 @@ SYNC_ACTION_END_STRING = \
 "    modify_field(intrinsic_metadata.mcast_grp, %d);\n\
 }\n\n"
 
+## TODO: P4-16 has no modify_field
 ECHO_ACTION_START_STRING = \
 "action %s_info%d() {\n\
     modify_field(%s,%s);\n\
@@ -61,11 +60,11 @@ ECHO_ACTION_END_STRING = \
 
 HEADER_START_STRING = \
 "header_type sync_info_t {\n\
-    fields{\n\
+    {\n\
 "
 
 HEADER_FNAME_STRING = \
-"       _%d : 32;\n"
+"       bit<_%d> : %s;\n"
 
 HEADER_END_STRING = \
 "   }\n\

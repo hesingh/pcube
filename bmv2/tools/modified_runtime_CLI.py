@@ -109,16 +109,14 @@ class MatchType:
     EXACT = 0
     LPM = 1
     TERNARY = 2
-    VALID = 3
-    RANGE = 4
 
     @staticmethod
     def to_str(x):
-        return {0: "exact", 1: "lpm", 2: "ternary", 3: "valid", 4: "range"}[x]
+        return {0: "exact", 1: "lpm", 2: "ternary"}[x]
 
     @staticmethod
     def from_str(x):
-        return {"exact": 0, "lpm": 1, "ternary": 2, "valid": 3, "range": 4}[x]
+        return {"exact": 0, "lpm": 1, "ternary": 2}[x]
 
 class Table:
     def __init__(self, name, id_):
@@ -282,18 +280,12 @@ def load_json_str(json_str):
             for j_key in j_table["key"]:
                 target = j_key["target"]
                 match_type = MatchType.from_str(j_key["match_type"])
-                if match_type == MatchType.VALID:
-                    field_name = target + "_valid"
-                    bitwidth = 1
-                elif target[1] == "$valid$":
-                    field_name = target[0] + "_valid"
-                    bitwidth = 1
                 else:
-                    field_name = ".".join(target)
-                    header_type = get_header_type(target[0],
-                                                  json_["headers"])
-                    bitwidth = get_field_bitwidth(header_type, target[1],
-                                                  json_["header_types"])
+                field_name = ".".join(target)
+                header_type = get_header_type(target[0],
+                                              json_["headers"])
+                bitwidth = get_field_bitwidth(header_type, target[1],
+                                              json_["header_types"])
                 table.key += [(field_name, match_type, bitwidth)]
 
     for j_meter in get_json_key("meter_arrays"):
@@ -480,8 +472,6 @@ _match_types_mapping = {
     MatchType.EXACT : BmMatchParamType.EXACT,
     MatchType.LPM : BmMatchParamType.LPM,
     MatchType.TERNARY : BmMatchParamType.TERNARY,
-    MatchType.VALID : BmMatchParamType.VALID,
-    MatchType.RANGE : BmMatchParamType.RANGE,
 }
 
 def parse_match_key(table, key_fields):
@@ -529,29 +519,6 @@ def parse_match_key(table, key_fields):
                 )
             param = BmMatchParam(type = param_type,
                                  ternary = BmMatchParamTernary(key, mask))
-        elif param_type == BmMatchParamType.VALID:
-            key = bool(int(field))
-            param = BmMatchParam(type = param_type,
-                                 valid = BmMatchParamValid(key))
-        elif param_type == BmMatchParamType.RANGE:
-            try:
-                start, end = field.split("->")
-            except ValueError:
-                raise UIn_MatchKeyError(
-                    "Invalid range value {}, use '->' to separate range start "
-                    "and range end".format(field))
-            start = bytes_to_string(parse_param_(start, bw))
-            end = bytes_to_string(parse_param_(end, bw))
-            if len(start) != len(end):
-                raise UIn_MatchKeyError(
-                    "start and end have different lengths in expression %s" % field
-                )
-            if start > end:
-                raise UIn_MatchKeyError(
-                    "start is less than end in expression %s" % field
-                )
-            param = BmMatchParam(type = param_type,
-                                 range = BmMatchParamRange(start, end))
         else:
             assert(0)
         params.append(param)
@@ -564,9 +531,7 @@ def BmMatchParam_to_str(self):
     return BmMatchParamType._VALUES_TO_NAMES[self.type] + "-" +\
         (self.exact.to_str() if self.exact else "") +\
         (self.lpm.to_str() if self.lpm else "") +\
-        (self.ternary.to_str() if self.ternary else "") +\
-        (self.valid.to_str() if self.valid else "") +\
-        (self.range.to_str() if self.range else "")
+        (self.ternary.to_str() if self.ternary else "")
 
 def BmMatchParamExact_to_str(self):
     return printable_byte_str(self.key)
@@ -577,18 +542,10 @@ def BmMatchParamLPM_to_str(self):
 def BmMatchParamTernary_to_str(self):
     return printable_byte_str(self.key) + " &&& " + printable_byte_str(self.mask)
 
-def BmMatchParamValid_to_str(self):
-    return ""
-
-def BmMatchParamRange_to_str(self):
-    return printable_byte_str(self.start) + " -> " + printable_byte_str(self.end_)
-
 BmMatchParam.to_str = BmMatchParam_to_str
 BmMatchParamExact.to_str = BmMatchParamExact_to_str
 BmMatchParamLPM.to_str = BmMatchParamLPM_to_str
 BmMatchParamTernary.to_str = BmMatchParamTernary_to_str
-BmMatchParamValid.to_str = BmMatchParamValid_to_str
-BmMatchParamRange.to_str = BmMatchParamRange_to_str
 
 # services is [(service_name, client_class), ...]
 def thrift_connect(thrift_ip, thrift_port, services):
@@ -970,7 +927,7 @@ class RuntimeAPI(cmd.Cmd):
                 "Table %s has no action %s" % (table_name, action_name)
             )
 
-        if table.match_type in {MatchType.TERNARY, MatchType.RANGE}:
+        if table.match_type in {MatchType.TERNARY}:
             try:
                 priority = int(args.pop(-1))
             except:
@@ -1230,7 +1187,7 @@ class RuntimeAPI(cmd.Cmd):
         else:
             self.check_indirect(table)
 
-        if table.match_type in {MatchType.TERNARY, MatchType.RANGE}:
+        if table.match_type in {MatchType.TERNARY}:
             try:
                 priority = int(args.pop(-1))
             except:
@@ -1958,14 +1915,8 @@ class RuntimeAPI(cmd.Cmd):
         def dump_ternary(p):
             return "{} &&& {}".format(hexstr(p.ternary.key),
                                       hexstr(p.ternary.mask))
-        def dump_range(p):
-            return "{} -> {}".format(hexstr(p.range.start),
-                                     hexstr(p.range.end_))
-        def dump_valid(p):
-            return "01" if p.valid.key else "00"
         pdumpers = {"exact": dump_exact, "lpm": dump_lpm,
-                    "ternary": dump_ternary, "valid": dump_valid,
-                    "range": dump_range}
+                    "ternary": dump_ternary}
 
         print "Dumping entry {}".format(hex(entry.entry_handle))
         print "Match key:"
@@ -2130,7 +2081,7 @@ class RuntimeAPI(cmd.Cmd):
 
         table = self.get_res("table", table_name, TABLES)
 
-        if table.match_type in {MatchType.TERNARY, MatchType.RANGE}:
+        if table.match_type in {MatchType.TERNARY}:
             try:
                 priority = int(args.pop(-1))
             except:

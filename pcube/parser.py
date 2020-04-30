@@ -57,12 +57,12 @@ class p4_code_generator():
             os.system('rm -f %s' % f)
 
     # Replaces the ip4 for loop format by sequential p4 code
-    def roll_out_forloop(self,content,iter_var,dfile,start,end,step):
+    def roll_out_forloop(self, content,iter_var, dfile, start, end, step):
         # For replacing all occurances of the loop variable in the code.
         replacement = '$%s' % iter_var
 
         for i in range(start,end,step):
-            dfile.write(content.replace(replacement,str(i)))
+            dfile.write(content.replace(replacement, str(i)))
 
     # Recognises all for loops present in the code along with their parameters
     # Nesting of loops not supported since it's not a common feature required in P4 programming
@@ -117,7 +117,7 @@ class p4_code_generator():
                         start, end, step = int(res.group(1)), self.constants[res.group(2)], int(res.group(3))
 
                 elif KEYWORDS['endfor'] in row:
-                    self.roll_out_forloop(content,iter_var,dfile,start,end,step)
+                    self.roll_out_forloop(content, iter_var, dfile, start, end, step)
                     active_for = False
                     content = ""
                 else:
@@ -402,7 +402,7 @@ if __name__ == '__main__':
 
     for i in range(1, num_switches + 1):
         dest = "%s%s_s%d.p4" % (p4src_folder,filename,i)
-        code_gen = p4_code_generator(i,src,dest,filename,p4src_folder,commands_folder)
+        code_gen = p4_code_generator(i, src, dest, filename, p4src_folder, commands_folder)
         code_gen.expand()
 
     generate_sync_header(p4src_folder, filename)

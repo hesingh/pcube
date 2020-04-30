@@ -7,16 +7,17 @@ CREATE_NODE = "mc_node_create %d %d\n"
 ASSOCIATE_NODE = "mc_node_associate %d %d\n"
 MIRRORING_ADD = "mirroring_add %d %d\n"
 
-def generate_sync_commands(topo_stats,commands_path):
+def generate_sync_commands(topo_stats, commands_path):
 	mgrp_no = 1
 
-	#Need to sort keys to keep a one to one mapping for switch number to mcast group
+	# Need to sort keys to keep a one to one mapping for switch number
+        # to mcast group
 	keylist = topo_stats.keys()
 	keylist.sort()
 
 	for key in keylist:
 		node_no = 0
-		f = open("%s/sync_commands_%s.txt"%(commands_path,key), 'a')
+		f = open("%s/sync_commands_%s.txt"%(commands_path, key), 'a')
 		stat = topo_stats[key]
 		num_hosts = stat["SERVERS"]
 		num_switches = stat["SWITCHES"]
@@ -35,7 +36,8 @@ def generate_sync_commands(topo_stats,commands_path):
 
 if __name__ == '__main__':
 	if sys.argv < 3:
-		print("Usage: python3 generate_sync_commands.py <topology in json> <commands_path>")
+		print("Usage: python3 generate_sync_commands.py "
+                      "<topology in json> <commands_path>")
 		sys.exit()
 
 	topo_file = sys.argv[1]
